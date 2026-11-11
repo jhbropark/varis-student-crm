@@ -12,7 +12,7 @@ function text(v,field,max=5000){if(v==null)return '';if(typeof v!=='string')thro
 function timestamp(v,fallback){if(v==null||v==='')return fallback;const n=typeof v==='number'?v:Date.parse(v);if(!Number.isFinite(n)||n<1||n>Date.now()+86400000)throw Error('날짜 형식 오류');return n;}
 function record(r){
  if(!r||typeof r!=='object'||Array.isArray(r))throw Error('레코드 형식 오류');
- const out={id:r.id?text(r.id,'ID',100):uid(),name:text(r.name,'이름',200),phone:text(r.phone,'연락처',200),email:text(r.email,'이메일',500),interest:text(r.interest,'관심분야',300),source:text(r.source,'유입경로',300),motive:text(r.motive,'지원동기',20000),stage:r.stage||'new',createdAt:timestamp(r.createdAt,Date.now()),notes:[]};
+ const out={id:r.id?text(r.id,'ID',100):uid(),name:text(r.name,'이름',200),phone:text(r.phone,'연락처',200),email:text(r.email,'이메일',500),interest:text(r.interest,'관심분야',300),source:text(r.source,'유입경로',300),motive:text(r.motive,'지원동기',20000),signatureDocumentId:text(r.signatureDocumentId,'전자서명 문서 ID',200),stage:r.stage||'new',createdAt:timestamp(r.createdAt,Date.now()),notes:[]};
  if(!/^[a-zA-Z0-9_-]+$/.test(out.id))throw Error('ID 형식 오류');
  if(!out.name&&!out.phone&&!out.email)throw Error('이름·연락처·이메일이 모두 비어 있습니다.');
  if(!STAGES.includes(out.stage))throw Error('알 수 없는 단계: '+String(out.stage));
@@ -37,7 +37,7 @@ function parseCsv(raw){
 function safeCell(v){let s=String(v??'');if(/^[\s\uFEFF]*[=+\-@]/.test(s)||/^[\t\r]/.test(s))s="'"+s;return s;}
 function csv(rows){return '\uFEFF'+rows.map(r=>r.map(v=>'"'+safeCell(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');}
 function unifiedRows(a){return [HEAD,...a.map(r=>['CRM-'+r.id,'지원자','VARIS','',r.name,r.phone,r.email,'',LABELS[STAGES.indexOf(r.stage)],'',r.source,r.interest,[r.motive,...r.notes.map(n=>'[상담 메모] '+n.text)].filter(Boolean).join('\n'),'crm.varis.kr','개인','','미확인','','','',''])];}
-function basicRows(a){return [['이름','연락처','이메일','관심분야','유입경로','단계','지원동기','접수일','CRM ID','상담메모 JSON'],...a.map(r=>[r.name,r.phone,r.email,r.interest,r.source,LABELS[STAGES.indexOf(r.stage)],r.motive,new Date(r.createdAt).toISOString(),r.id,JSON.stringify(r.notes)])];}
+function basicRows(a){return [['이름','연락처','이메일','관심분야','유입경로','단계','지원동기','전자서명 문서 ID','접수일','CRM ID','상담메모 JSON'],...a.map(r=>[r.name,r.phone,r.email,r.interest,r.source,LABELS[STAGES.indexOf(r.stage)],r.motive,r.signatureDocumentId,new Date(r.createdAt).toISOString(),r.id,JSON.stringify(r.notes)])];}
 function importText(raw,filename){
  if(raw.length>5*1024*1024)throw Error('복원 파일은 5MB 이하여야 합니다.');
  if(/\.json$/i.test(filename)){
@@ -52,7 +52,7 @@ function importText(raw,filename){
   if(row.length!==h.length)throw Error('CSV '+(i+2)+'행 열 개수 오류');const g=k=>{let v=row[h.indexOf(k)]||'';return /^'[\s\uFEFF]*[=+\-@]/.test(v)?v.slice(1):v;};
   const label=g(unified?'관리상태':'단계');const stage=label?STAGES[LABELS.indexOf(label)]:'new';if(!stage)throw Error('CSV 단계 오류: '+label);
   const id=g(unified?'연락처ID':'CRM ID');const n=g('상담메모 JSON');
-  return record({id:id?(unified?id.replace(/^CRM-/,''):id):undefined,name:g('이름'),phone:g('연락처'),email:g('이메일'),interest:g(unified?'과정':'관심분야'),source:g('유입경로'),motive:g(unified?'운영 메모':'지원동기'),stage,createdAt:g('접수일')||undefined,notes:n?JSON.parse(n):[]});
+  return record({id:id?(unified?id.replace(/^CRM-/,''):id):undefined,name:g('이름'),phone:g('연락처'),email:g('이메일'),interest:g(unified?'과정':'관심분야'),source:g('유입경로'),motive:g(unified?'운영 메모':'지원동기'),signatureDocumentId:g('전자서명 문서 ID'),stage,createdAt:g('접수일')||undefined,notes:n?JSON.parse(n):[]});
  });return {records:out,lossy:unified||!h.includes('상담메모 JSON'),ignoredTokens:false};
 }
 function planMerge(current,incoming){
@@ -72,7 +72,7 @@ function planMerge(current,incoming){
   const contradiction=(c.name&&r.name&&c.name!==r.name)||(c.phone&&r.phone&&phone(c.phone)!==phone(r.phone))||(c.email&&r.email&&email(c.email)!==email(r.email));
   if(contradiction){summary.conflicts++;continue;}
   const before=JSON.stringify(c);let differences=false;
-  for(const f of ['name','phone','email','interest','source','motive']){if(!c[f]&&r[f])c[f]=r[f];else if(c[f]&&r[f]&&c[f]!==r[f])differences=true;}
+  for(const f of ['name','phone','email','interest','source','motive','signatureDocumentId']){if(!c[f]&&r[f])c[f]=r[f];else if(c[f]&&r[f]&&c[f]!==r[f])differences=true;}
   if(c.stage!==r.stage)differences=true;
   for(const n of r.notes)if(!c.notes.some(x=>x.text===n.text&&x.ts===n.ts))c.notes.push(n);
   index(c,at);if(differences)summary.conflicts++;

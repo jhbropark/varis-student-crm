@@ -30,9 +30,9 @@
   <div class="wrap hd">
     <div class="logo"><span class="mk">◤◢</span> VARIS <small>CRM</small></div>
     <div class="nav">
-      <button data-view="server" class="on">자동 접수 CRM</button>
-      <button data-view="crm">로컬 기록</button>
-      <button data-view="mail">메일 현황</button>
+      <button data-view="server" class="on">자동 접수 CRM · 공식 원본</button>
+      <button data-view="crm">로컬 기록 · 임시</button>
+      <button data-view="mail">메일 현황 · 별도</button>
       <button data-view="recruitment">모집 자동화</button>
       <button data-view="electronic">전자기능</button>
     </div>
@@ -55,11 +55,15 @@
   <!-- ===== CRM VIEW ===== -->
   <section class="view" id="view-server" aria-labelledby="serverHeading">
     <div class="signHead"><div><h2 id="serverHeading">폼 접수 · 요청 범위 내 후속 안내</h2><p class="smallprint">접수 저장, 이메일 본인확인, 담당자 적격 검토, 지원·등록을 구분합니다. 자료 요청과 QA는 상담 후보로 계산하지 않습니다.</p></div><div class="actions"><button class="btn" id="serverRefresh">서버 화면 새로고침</button><a class="btn primary" href="https://sign.varis.kr/crm" target="_blank" rel="noopener noreferrer">서버 CRM 별도 창</a></div></div>
-    <p class="banner">직원 로그인이 필요한 공용 CRM입니다. 기존 로컬 기록은 자동 이관하거나 연락 대상으로 사용하지 않습니다.</p>
+    <p class="banner"><strong>공식 원본은 서버 CRM입니다.</strong> 직원 로그인이 필요한 공용 CRM이며, 이 화면의 로컬 기록은 자동 이관하거나 연락 대상으로 사용하지 않습니다.</p>
     <div class="signFrameWrap"><iframe id="serverFrame" title="인증된 서버 상담 CRM" referrerpolicy="no-referrer" hidden></iframe></div>
     <p class="smallprint">작성 중인 메모는 먼저 저장하세요. 로그인이 필요하면 별도 창에서 로그인한 뒤 새로고침하세요. SMTP 접수는 수신함 도착을 뜻하지 않습니다.</p>
   </section>
   <section class="view" id="view-crm">
+    <div class="localPolicy" id="localPolicy" role="status">
+      <div><strong>로컬 기록은 임시 작업공간입니다.</strong><br>공식 원본은 서버 CRM입니다. 로컬 개인정보는 이 브라우저에만 평문으로 저장되며, 새 입력·수정·단계 변경은 세션별 명시적 허용이 필요합니다.</div>
+      <button class="btn" id="localWriteBtn" type="button">로컬 임시 작업 열기</button>
+    </div>
     <div class="backupbar" id="backupBar"></div>
     <div class="stats" id="stats"></div>
     <div class="toolbar">
@@ -75,10 +79,10 @@
   <!-- ===== RECRUITMENT VIEW ===== -->
   <section class="view" id="view-recruitment">
     <div class="recruitHead">
-      <div><h2>모집 자동화</h2><p class="smallprint">sender.varis.kr의 발송 집계와 캠페인 상태를 읽기 전용으로 연결합니다. 실제 기관별 발송은 기존 sender.py 경로에서만 실행됩니다.</p></div>
+      <div><h2>모집 자동화</h2><p class="smallprint">sender.varis.kr의 발송 집계와 캠페인 상태를 읽기 전용으로 연결합니다. 실제 기관별 발송은 기존 sender.py 경로에서만 실행됩니다. 집계가 24시간을 넘기면 운영 경고를 표시합니다.</p></div>
       <div class="actions"><a class="btn primary" href="https://sender.varis.kr/" target="_blank" rel="noopener noreferrer">sender 대시보드 열기</a><button class="btn" id="recruitRefresh">상태 새로고침</button></div>
     </div>
-    <div id="recruitStatus" class="banner">모집 상태를 불러오는 중...</div>
+    <div id="recruitStatus" class="banner" role="status" aria-live="polite">모집 상태를 불러오는 중...</div>
     <div id="recruitKpis" class="stats recruitStats"></div>
     <h3 class="recruitSubhead">공식 채널 발굴 게이트</h3>
     <div id="recruitDiscovery" class="stats recruitStats discoveryStats"></div>
@@ -94,13 +98,18 @@
     </div>
     <div id="signStatus" class="banner" role="status">전자서명 연결을 기다리는 중입니다.</div>
     <div class="signFilters" id="signCounts" aria-label="전자서명 문서 상태"></div>
-    <p class="smallprint" id="signPrivacy">전자서명 직원 로그인 권한을 사용합니다. 계약서와 서명 정보는 CRM 브라우저 저장소나 백업 파일에 복사하지 않습니다. 상담 지원자 DB와 계약 상대방은 자동 연결되지 않습니다.</p>
+    <p class="smallprint" id="signPrivacy">전자서명 직원 로그인 권한을 사용합니다. 계약서와 서명 정보는 CRM 브라우저 저장소나 백업 파일에 복사하지 않습니다. 상담 지원자에는 전자서명 문서 ID 연결 키를 저장할 수 있으며, 문서 본문은 서명 서비스에만 보관합니다.</p>
     <div class="signFrameWrap"><iframe id="signFrame" title="VARIS 전자서명 문서 관리" referrerpolicy="no-referrer" allow="clipboard-write 'src'" hidden></iframe></div>
     <p class="smallprint signHelp">로그인이 필요하면 위 서명 화면에서 진행하세요. 이메일 링크는 별도 창에서 연 뒤 [문서 목록]을 누르세요. 상태 자동 갱신은 작성 중인 화면을 바꾸지 않습니다. 표시되지 않으면 [별도 창으로 열기]를 이용하세요. 문서 발송·무효화는 서명 화면에서 직접 검토 후 실행합니다.</p>
   </section>
 
   <!-- ===== MAIL VIEW ===== -->
-  <section class="view" id="view-mail"><h2>메일 현황 연동</h2><div class="banner err">이 정적 CRM에는 메일 통계 API가 배포되어 있지 않습니다. 기존 /api/stats 호출은 동작하지 않으므로 조회를 중단했습니다. 데이터 미확인을 발송 0건으로 표시하지 않습니다.</div><p class="smallprint">메일 발송은 기존 sender.py 경로만 사용합니다. 이 CRM에서 발송하지 않습니다. 인증된 서버 연동 전까지 별도 대시보드에서 확인하세요.</p><div class="actions"><a class="btn" href="https://sender.varis.kr/" target="_blank" rel="noopener noreferrer">발송 대시보드 열기</a><a class="btn" href="https://mail.varis.kr/dashboard.html" target="_blank" rel="noopener noreferrer">메일 제어판 열기</a></div></section>
+  <section class="view" id="view-mail">
+    <h2>메일 현황 · 별도 시스템</h2>
+    <div id="mailStatus" class="banner err" role="status" aria-live="polite"><strong>메일 통계는 CRM과 별도 시스템입니다.</strong> 이 CRM에는 통계 API가 연결되어 있지 않아 발송 0건으로 추정하지 않습니다.</div>
+    <p class="smallprint">메일 발송은 기존 sender.py 경로에서만 실행됩니다. 실제 집계와 제어는 아래 대시보드에서 확인하세요. CRM에서는 메일을 발송하지 않습니다.</p>
+    <div class="actions"><a class="btn" href="https://sender.varis.kr/" target="_blank" rel="noopener noreferrer">발송 대시보드 열기</a><a class="btn" href="https://mail.varis.kr/dashboard.html" target="_blank" rel="noopener noreferrer">메일 제어판 열기</a></div>
+  </section>
 </main>
 
 <!-- Add/Edit modal -->
@@ -127,6 +136,7 @@
       </div>
     </div>
     <div class="field"><label for="f_motive">지원 동기 · 문의</label><textarea maxlength="20000" id="f_motive" placeholder="상담 시 참고할 내용"></textarea></div>
+    <div class="field"><label for="f_signatureDocumentId">전자서명 문서 ID</label><input maxlength="200" id="f_signatureDocumentId" placeholder="서명 서비스의 문서 ID를 입력하세요"></div>
     <div class="modalft">
       <button class="btn ghost" id="formCancel">취소</button>
       <div class="spacer"></div>

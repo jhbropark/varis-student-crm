@@ -4,10 +4,10 @@
 
 ## Scope
 
-Static browser-local counseling workspace. **No server database, login, authorization, storage encryption, cross-PC collaboration, scheduled Sheets backup or mail statistics API.**
+`crm.varis.kr` is an operations hub whose **authenticated server CRM is the official source of truth**. The local tab is a browser-local, read-only-by-default temporary workspace and is never automatically synchronized with the server CRM. **There is no local storage encryption, cross-PC collaboration, scheduled Sheets backup or mail statistics API in this repository.**
 
 - `crm-core.js`: validation, multiline CSV parsing, formula-safe serialization, conservative merge and optimistic storage conflict guard.
-- `app.js`: kanban, form validation, display masking, JSON/CSV export, mandatory restore preview and cross-tab change alerts.
+- `app.js`: server-source labeling, session opt-in for local writes, kanban, form validation, display masking, JSON/CSV export, mandatory restore preview, cross-tab change alerts and recruitment freshness warnings.
 - `styles.css`: mobile/desktop layout and keyboard focus.
 - `vercel.json`: CSP, frame denial, MIME protection, no-referrer, noindex. Only generated `public/` assets are deployed.
 
@@ -39,12 +39,12 @@ Before migrations, export JSON. Vercel rollback changes app assets only, not bro
 
 ## Mail and next gate
 
-The production `/api/stats` returned HTTP 404. The broken manual-token fetch UI is replaced with an explicit unavailable state and links to existing dashboards. No email dispatch occurs here. Institution outreach remains on recipient-by-recipient `sender.py` only.
+Mail statistics are an explicitly separate system. The production `/api/stats` returned HTTP 404, so this CRM does not infer zero sends and does not dispatch email. The UI links to `sender.varis.kr` and `mail.varis.kr/dashboard.html`, where sender.py and mail controls remain authoritative. Institution outreach remains on recipient-by-recipient `sender.py` only.
 
 See `UPDATE-STRATEGY.md` for server-auth/database migration gates. Do not claim collaboration readiness before authentication, authorization, RLS, migration and backup restore drills pass.
 
 ## Electronic signature integration
 
-The 전자기능 tab embeds the authenticated sign.varis.kr document workspace. Existing signature staff permissions and RLS remain authoritative. GET https://sign.varis.kr/api/crm/status provides credentialed, no-store aggregate status counts; 401/errors are shown as unavailable, not zero. No API keys, contract data, signature tokens or login tokens are stored in CRM localStorage, exports or the public repository. Document creation, requests, reminders, invalidation and PDF downloads remain in the signature service and are initiated explicitly by the operator. Applicant records are not automatically matched to contract counterparties. CRM applicant storage is unchanged and remains browser-local.
+The 전자기능 tab embeds the authenticated sign.varis.kr document workspace. Existing signature staff permissions and RLS remain authoritative. GET https://sign.varis.kr/api/crm/status provides credentialed, no-store aggregate status counts; 401/errors are shown as unavailable, not zero. No API keys, contract data, signature tokens or login tokens are stored in CRM localStorage, exports or the public repository. Document creation, requests, reminders, invalidation and PDF downloads remain in the signature service and are initiated explicitly by the operator. Applicant records are not automatically matched to contract counterparties. Local applicant records now carry an optional `signatureDocumentId` connection key for operator-managed linking; contract bodies and signing tokens remain only in the signature service. CRM applicant storage remains browser-local and requires an explicit session opt-in for writes.
 
 CSP permits frames and connections only to the exact signature origin. The signature app permits framing by crm.varis.kr. No public contract-data proxy is introduced.

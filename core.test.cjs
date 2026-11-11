@@ -1,5 +1,5 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const C=require('./crm-core.js');
-const make=(changes={})=>({id:'test-1',name:'테스트',phone:'010-0000-0000',email:'test@example.invalid',interest:'AI',source:'테스트',motive:'내용',stage:'new',createdAt:1700000000000,notes:[],...changes});
+const make=(changes={})=>({id:'test-1',name:'테스트',phone:'010-0000-0000',email:'test@example.invalid',interest:'AI',source:'테스트',motive:'내용',signatureDocumentId:'',stage:'new',createdAt:1700000000000,notes:[],...changes});
 test('CSV quoted multiline, quotes, commas and BOM',()=>assert.deepEqual(C.parseCsv('\uFEFF"a","b"\r\n"x\ny","a,""b"""'),[['a','b'],['x\ny','a,"b"']]));
 test('CSV unmatched quotes fail',()=>assert.throws(()=>C.parseCsv('"x')));
 test('CSV header validation fails closed',()=>assert.throws(()=>C.importText('wrong,header\nx,y','x.csv')));
@@ -13,7 +13,7 @@ test('email-only match supplements phone',()=>{const p=C.planMerge([make({phone:
 test('contradictory identity skips record rather than merging',()=>{const p=C.planMerge([make()],[make({id:'test-2',name:'다른사람'})]);assert.equal(p.summary.conflicts,1);assert.equal(p.next.length,1);assert.equal(p.next[0].name,'테스트');});
 test('ambiguous phone/email records are not joined',()=>{const a=make({id:'a',email:'a@example.invalid'}),b=make({id:'b',phone:'010-1111-1111'});const p=C.planMerge([a,b],[make({id:'c'})]);assert.equal(p.summary.conflicts,1);assert.equal(p.next.length,2);});
 test('existing stage and motive kept, conflict is explicit',()=>{const p=C.planMerge([make({stage:'enrolled'})],[make({motive:'수정'})]);assert.equal(p.next[0].stage,'enrolled');assert.equal(p.next[0].motive,'내용');assert.equal(p.summary.conflicts,1);});
-test('basic CSV preserves IDs, date, multiline motive and timestamped notes',()=>{const r=make({motive:'줄1\n줄2, "인용"',notes:[{text:'상담\n메모',ts:1700000000001}]});const csv=C.csv(C.basicRows([r]));const p=C.importText(csv,'x.csv');assert.deepEqual(p.records[0],r);assert.equal(p.lossy,false);});
+test('basic CSV preserves IDs, date, multiline motive, signature key and timestamped notes',()=>{const r=make({motive:'줄1\n줄2, "인용"',signatureDocumentId:'doc-qa-001',notes:[{text:'상담\n메모',ts:1700000000001}]});const csv=C.csv(C.basicRows([r]));const p=C.importText(csv,'x.csv');assert.deepEqual(p.records[0],r);assert.equal(p.lossy,false);});
 test('unified CSV has 21 columns, preserves ID, declares lossy',()=>{const csv=C.csv(C.unifiedRows([make()]));assert.equal(C.parseCsv(csv)[0].length,21);const p=C.importText(csv,'x.csv');assert.equal(p.records[0].id,'test-1');assert.equal(p.lossy,true);});
 test('CSV formulas neutralized including whitespace and international phone',()=>{for(const x of ['=1+1',' +1','@SUM(1)','-1','\t=1','+82 10'])assert.equal(C.safeCell(x),"'"+x);assert.equal(C.safeCell('일반'),'일반');});
 test('quota write failure leaves persisted data intact',()=>{let raw=JSON.stringify([make()]);const storage={getItem:()=>raw,setItem(){throw Error('QuotaExceededError');}};const s=C.createStore(storage,'key');s.read();assert.throws(()=>s.write([]));assert.equal(JSON.parse(raw).length,1);});
